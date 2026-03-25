@@ -20,16 +20,18 @@ class product_t:
     size: str
     style: str
     country: str
+    alcVol: str
+    #TODO score: float
     #TODO spara bild för att visa i UI
 
-BeerData = [] #TODO typa??
+BeerData = [] #TODO typa(Kanske inte behövs)??
 
 def AgeCheck():
     SystembolagDriver.get("https://www.systembolaget.se/sortiment/ol/") #TODO parsa för egen butik/Kategori osv 
-    time.sleep(2) #TODO RACE CONDITION
+    time.sleep(5) #TODO RACE CONDITION
     AgeCheck = SystembolagDriver.find_element(By.XPATH, '/html/body/div[3]/section/div/div/div[3]/a[2]')
     AgeCheck.click()
-    time.sleep(2) #TODO RACE CONDITION
+    time.sleep(5) #TODO RACE CONDITION
     CookieCheck = SystembolagDriver.find_element(By.XPATH, '/html/body/div[6]/div[3]/div/div/button[2]')
     CookieCheck.click()
 
@@ -77,16 +79,25 @@ def FetchProducts():
                 NewBrewery = "Unknown brewery"
                 NewName = "Unknown Name"
 
-
-        
+            countryVolumeAlcSize_elements = card.select('p[class*="sans-175"]')
+            
+            if len(countryVolumeAlcSize_elements) >= 3:
+                NewCountry = countryVolumeAlcSize_elements[1].text.strip()
+                NewSize = countryVolumeAlcSize_elements[2].text.strip()
+                NewAlcVol = countryVolumeAlcSize_elements[3].text.strip()
+            else:
+                NewCountry = "Anomalus country, vol or alc"
+                NewSize = "Anomalus country, vol or alc"
+                NewAlcVol = "Anomalus country, vol or alc"
 
             NewBeer = product_t(
                 name = NewName,
                 brewery = NewBrewery,
                 price = NewPrice,
-                size = "NA", 
+                size = NewSize, 
                 style = NewStyle,
-                country = "NA"
+                country = NewCountry,
+                alcVol = NewAlcVol
             )
             BeerData.append(NewBeer)    
             
