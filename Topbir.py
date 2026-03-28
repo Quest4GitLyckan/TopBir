@@ -1,10 +1,12 @@
 from selenium import webdriver
 from selenium.webdriver.common.by import By
+from googlesearch import search
 from selenium.webdriver.chrome.service import Service
 from webdriver_manager.chrome import ChromeDriverManager
 from selenium.common.exceptions import NoSuchElementException
 from bs4 import BeautifulSoup
 import time
+import requests
 from dataclasses import dataclass
 
 #skapa drivermeme
@@ -21,7 +23,8 @@ class product_t:
     style: str
     country: str
     alcVol: str
-    #TODO score: float
+    score: str
+    ratingAmounts: str
     #TODO spara bild för att visa i UI
 
 BeerData = [] #TODO typa(Kanske inte behövs)??
@@ -97,13 +100,49 @@ def FetchProducts():
                 size = NewSize, 
                 style = NewStyle,
                 country = NewCountry,
-                alcVol = NewAlcVol
+                alcVol = NewAlcVol,
+                score = "NA",
+                ratingAmounts = "NA"
             )
             BeerData.append(NewBeer)    
             
     except Exception as e:
         print(f"Skipped a product. Reason: {e}")
 
+def fetchScore():
+    for beer in BeerData:
+        
+        query = f'site:untappd.com/b/ "{beer.brewery}" "{beer.name}"'
+        
+        try:
+            search_results = list(search(query, num=1, stop=1, pause=2))
+
+            if not search_results:
+                print("beer not found")
+                return
+                
+            exact_url = search_results[0]
+
+            headers = {
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+            }
+            response = requests.get(exact_url, headers=headers)
+            
+            if response.status_code == 200:
+        
+                soup = BeautifulSoup(response.text, 'html.parser')
+                print(soup)
+                NewScore = soup.select_one('span["class=num"]').text.strip()
+                NewRatingAmount = soup.select_one('p["class=raters"]').text.strip()
+
+                print(NewRatingAmount)
+                print(NewScore)
+
+                beer.score = NewScore
+                beer.RatingAmounts = NewRatingAmount
+                
+        except Exception as e:
+            return f"An error occurred: {e}"
 
 
 def Main():
@@ -111,6 +150,7 @@ def Main():
     AgeCheck()
     LoadWholePage() #HIttar en sida för tester
     FetchProducts()
+    fetchScore()
 
 
     #while(True): #Hämtar ALLT
